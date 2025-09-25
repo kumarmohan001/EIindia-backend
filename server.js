@@ -15,25 +15,23 @@ const app = express();
 const PORT = process.env.PORT || 4000;
 
 // Frontend URL
-const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-const allowedOrigins = [frontendUrl];
+const allowedOrigins = [
+  "http://localhost:5173",            // your Vite dev server
+  "https://e-iindia-admin-rcrc.vercel.app/" // your production domain
+];
 
-// CORS Configuration
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true); // ✅ Allow
-      } else {
-        console.warn(`❌ CORS Blocked: ${origin}`);
-        callback(new Error("Not allowed by CORS")); // ❌ Block
-      }
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true
+};
+
+app.use(cors(corsOptions));
 
 // Middleware for JSON and URL-encoded data
 app.use(express.json());
@@ -56,5 +54,4 @@ app.use((err, req, res, next) => {
 // Start the server
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`🌐 Allowed frontend URL: ${frontendUrl}`);
 });
