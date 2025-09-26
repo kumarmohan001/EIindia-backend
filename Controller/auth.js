@@ -1,6 +1,8 @@
 import User from '../Model/user.js'
 import { hashPassword ,comparePassword} from '../config/hashPassword.js';
-import jwt from 'jsonwebtoken';  
+import jwt from 'jsonwebtoken';
+import TokenBlacklist  from "../Model/tokenBlacklist.js";
+
 
 export const signup = async(req,res)=>{
     try {
@@ -103,3 +105,32 @@ export const login = async (req, res) => {
     }
 };
 
+
+
+export const logout = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) {
+      return res.status(400).json({ success: false, message: "No token provided." });
+    }
+
+    // Add the token to the blacklist
+    const decoded = JSON.parse(Buffer.from(token.split('.')[1], 'base64').toString());
+    const expiresAt = new Date(decoded.exp * 1000); // JWT expiry time
+
+    await TokenBlacklist.create({ token, expiresAt });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully. Token invalidated.",
+    });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Something went wrong while logging out.",
+    });
+  }
+};

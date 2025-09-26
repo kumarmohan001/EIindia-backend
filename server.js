@@ -17,7 +17,7 @@ const PORT = process.env.PORT || 4000;
 // Frontend URL
 const allowedOrigins = [
   "http://localhost:5173",            // your Vite dev server
-  "https://e-iindia-admin-rcrc.vercel.app/" // your production domain
+  "https://e-iindia-admin-tzyq.vercel.app" // your production domain
 ];
 
 const corsOptions = {
