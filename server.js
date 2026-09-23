@@ -1,57 +1,48 @@
-// server.js
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import userRoutes from "./Route/index.js";
 
-// Load environment variables early
 dotenv.config();
-
-// Connect to the database
 connectDB();
 
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// Frontend URL
+// Keep this list in sync with the production Vercel domain. FRONTEND_URL lets
+// Render override/add a domain without a code change.
 const allowedOrigins = [
-  "http://localhost:5173",            // your Vite dev server
-  "https://e-iindia-admin-tzyq.vercel.app" // your production domain
-];
+  "http://localhost:5173",
+  "https://warehouse-frontend-seven.vercel.app",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
 const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    return callback(new Error("Not allowed by CORS"));
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  optionsSuccessStatus: 204,
 };
 
+// Explicitly handle browser preflight requests before API routes.
 app.use(cors(corsOptions));
+app.options(/.*/, cors(corsOptions));
 
-// Middleware for JSON and URL-encoded data
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// API routes
 app.use("/api", userRoutes);
 
-// Health check route
-app.get("/", (req, res) => {
-  res.send("✅ Server is running!");
-});
+app.get("/", (req, res) => res.send("Server is running!"));
+app.get("/health", (req, res) => res.json({ success: true, message: "Server is running" }));
 
-// Global error handler for CORS and other middleware issues
 app.use((err, req, res, next) => {
-  console.error("❌ Error:", err.message);
+  console.error("Error:", err.message);
   res.status(500).json({ success: false, message: err.message });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
